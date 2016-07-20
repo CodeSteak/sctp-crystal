@@ -10,7 +10,7 @@ You need to have `lksctp-tools` installed.
 #### Arch
 `# pacman -S lksctp-tools`
 #### Ubuntu
-`# sudo apt-get install libsctp-dev lksctp-tools`
+`# apt-get install libsctp-dev lksctp-tools`
 
 ### Other OS
 ¯\\_(ツ)_/¯
