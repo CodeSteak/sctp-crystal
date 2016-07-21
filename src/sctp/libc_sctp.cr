@@ -87,4 +87,16 @@ lib LibC
   fun sctp_send(s : LibC::Int, msg : Void*, len : LibC::SizeT, sinfo : SctpSndrcvinfo*, flags : LibC::Int) : LibC::Int
   fun sctp_recvmsg(s : LibC::Int, msg : Void*, len : LibC::SizeT, from : Sockaddr*, fromlen : SocklenT*, sinfo : SctpSndrcvinfo*, msg_flags : LibC::Int*) : LibC::Int
   fun sctp_getaddrlen(family : SaFamilyT) : LibC::Int
+  struct SctpEventSubscribe
+    sctp_data_io_event : UInt8
+    sctp_association_event : UInt8
+    sctp_address_event : UInt8
+    sctp_send_failure_event : UInt8
+    sctp_peer_error_event : UInt8
+    sctp_shutdown_event : UInt8
+    sctp_partial_delivery_event : UInt8
+    sctp_adaptation_layer_event : UInt8
+    sctp_authentication_event : UInt8
+    sctp_sender_dry_event : UInt8
+  end
 end
