@@ -3,7 +3,7 @@ require "../src/sctp"
 #Time Server
 def run_server
   server = SCTPServer.new "::0", 9000
-
+  server.autoclose = 30 #seconds
   spawn do
     loop do
       data, stream, address = server.receive

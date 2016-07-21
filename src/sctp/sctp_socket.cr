@@ -28,7 +28,16 @@
      def close
        @parent.unregister_stream_channel(@stream_no, @destination)
      end
+   end
 
+   def initialize(family : Socket::Family = Socket::Family::INET6)
+      super create_socket(family.value, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP)
+      enable_sctp_data_io_event
+   end
+
+   def initialize(fd : Int32)
+     super fd
+     enable_sctp_data_io_event
    end
 
    @stream_channel = Hash({UInt16, IPAddress}, Channel::Buffered(Slice(UInt8))).new
@@ -44,22 +53,6 @@
    def [](stream_no : UInt16 | Int32, source : IPAddress)
      raise Error.new "Error opening SCTPChannel Object: it already exits" if @stream_channel[{stream_no, source}]?
      SCTPChannel.new(self, stream_no.to_u16, source)
-   end
-
-   def initialize(family : Socket::Family = Socket::Family::INET6)
-      super create_socket(family.value, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP)
-      enable_sctp_data_io_event
-   end
-
-   def initialize(fd : Int32)
-     super fd
-     enable_sctp_data_io_event
-   end
-
-   private def enable_sctp_data_io_event
-     event = LibC::SctpEventSubscribe.new
-     event.sctp_data_io_event = 1_u8
-     LibC.setsockopt(@fd, LibC::IPPROTO_SCTP, LibC::SCTP_EVENTS, pointerof(event).as(Void*), sizeof(LibC::SctpEventSubscribe))
    end
 
    def bind(host, port, dns_timeout = nil)
@@ -169,6 +162,20 @@
 
   def address(host, port, family = Socket::Family::INET6)
     IPAddress.new family, host, port
+  end
+
+  private def enable_sctp_data_io_event
+    event = LibC::SctpEventSubscribe.new
+    event.sctp_data_io_event = 1_u8
+    set_socketopt(LibC::SCTP_EVENTS, event)
+  end
+
+  def autoclose=(seconds : Int32?)
+    set_socketopt(LibC::SCTP_AUTOCLOSE, seconds ? seconds : 0)
+  end
+
+  def set_socketopt(option : Int32, value)
+    LibC.setsockopt(@fd, LibC::IPPROTO_SCTP, option, pointerof(value).as(Void*), sizeof(typeof(value)))
   end
 
  end
