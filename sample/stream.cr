@@ -41,7 +41,6 @@ spawn do
   client.close
 end
 
-puts "whut"
 ch5 = client[5]
 ch5.write_byte 100_u8
 ch5.flush
