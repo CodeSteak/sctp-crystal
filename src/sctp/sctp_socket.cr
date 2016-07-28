@@ -34,6 +34,54 @@
      end
    end
 
+   struct SCTPMessage
+      getter stream_no : UInt16
+      getter data : Slice(UInt8)
+      getter address : IPAddress
+      getter socket : SCTPSocket
+
+      def initialize(@data : Slice(UInt8), @stream_no : UInt16, @address : IPAddress, @socket : SCTPSocket)
+      end
+
+      def respond(response : Slice(UInt8))
+        socket.send(response, stream_no, address)
+      end
+
+      def respond(response)
+        socket.send(response, stream_no, address)
+      end
+
+      def echo
+        send
+      end
+
+      def send
+        socket.send(data, stream_no, address)
+      end
+
+      def data_as_string
+        String.new data
+      end
+
+      def gets
+        data_as_string
+      end
+
+      def puts(string : String)
+        respond(string)
+      end
+
+      def open_channel
+        socket[stream_no, addr]
+      end
+
+      def as_channel
+        ret = open_channel
+        ret.@in_channel.send(data)
+        ret
+      end
+   end
+
    def initialize(family : Socket::Family = Socket::Family::INET6)
       super create_socket(family.value, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP)
       enable_sctp_data_io_event
@@ -89,7 +137,7 @@
     raise ex unless closed?
   end
 
-  def receive : {Slice(UInt8), UInt16, IPAddress}
+  def receive : SCTPMessage
     loop do
       slice = Slice(UInt8).new 8196
       len, stream_no, address = receive(slice)
@@ -97,7 +145,7 @@
       if ch = @stream_channel[{stream_no, address}]?
         ch.send(slice[0, len])
       else
-        return {slice[0, len], stream_no, address}
+        return SCTPMessage.new slice[0, len], stream_no, address, self
       end
     end
   end

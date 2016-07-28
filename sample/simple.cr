@@ -3,9 +3,9 @@ require "../src/sctp"
 server = SCTPServer.new "::0", 9000
 spawn do
   loop do
-    data, stream, address = server.receive
+    msg = server.receive
     puts "in : "
-    puts String.new data
+    puts String.new msg.data
   end
 end
 

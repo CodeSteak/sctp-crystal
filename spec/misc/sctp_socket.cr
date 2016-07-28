@@ -7,8 +7,8 @@ describe "sctp_socket" do
     server = SCTPServer.new "::0", 9000
 
     spawn do
-      data, stream, address = server.receive
-      server.send(data, stream, address)
+      in_msg = server.receive
+      in_msg.echo
       server.close
     end
 
@@ -16,10 +16,10 @@ describe "sctp_socket" do
     addr   = client.address("::1",9000) #defaults to IPv6
     client.send(msg, 6, addr)
 
-    echo, stream_no, inaddr = client.receive
+    in_msg = client.receive
 
-    String.new(echo).should eq(msg)
-    stream_no.should eq(6)
+    in_msg.gets.should eq(msg)
+    in_msg.stream_no.should eq(6)
 
     client.close
   end
@@ -34,10 +34,11 @@ describe "sctp_socket" do
 
       server = SCTPServer.new "::0", 9001
       spawn do
-        data, stream, address = server.receive
+        msg = server.receive
+        address = msg.address
         server.send("one", 1, address)
         server.send("three", 3, address)
-        data, stream, address = server.receive
+        msg = server.receive
         server.send("three", 3, address)
         server.close
       end
@@ -46,8 +47,8 @@ describe "sctp_socket" do
 
       client.send("-", 0, server_addr)
       spawn do
-        client.process do |data, stream, address |
-          testch.send(String.new data)
+        client.process do |msg|
+          testch.send(String.new msg.data)
         end
       end
       channel_three.receive_string.should eq("three")

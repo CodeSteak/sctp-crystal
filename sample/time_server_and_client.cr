@@ -6,16 +6,15 @@ def run_server
   server.autoclose = 30 #seconds
   spawn do
     loop do
-      data, stream, address = server.receive
-      req = String.new data
+      request = server.receive
 
-      case req
+      case request.gets
       when "local"
-        server.send(Time.now.to_s("%Y-%m-%d %H:%M:%S"),stream,address)
+        request.respond Time.now.to_s("%Y-%m-%d %H:%M:%S")
       when "utc"
-        server.send(Time.utc_now.to_s("%Y-%m-%d %H:%M:%S"),stream,address)
+        request.respond Time.utc_now.to_s("%Y-%m-%d %H:%M:%S")
       else
-        server.send("¯\\(ツ)/¯",stream,address)
+        request.respond("¯\\(ツ)/¯")
       end
     end
   end
@@ -36,8 +35,8 @@ def run_client
   # other streams or hosts can be caught.
   # This can also be done with `process`.
   spawn do
-    socket.process do |data, stream, address |
-      puts "err : ", String.new(data), {stream, address}
+    socket.process do |msg|
+      puts "err : ", msg
     end
   end
 
