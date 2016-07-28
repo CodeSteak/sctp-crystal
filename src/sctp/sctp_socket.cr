@@ -103,7 +103,7 @@
    end
 
    def [](stream_no : UInt16 | Int32, source : IPAddress)
-     raise Error.new "Error opening SCTPChannel Object: it already exits" if @stream_channel[{stream_no, source}]?
+     raise Error.new "Error opening SCTPChannel Object: it already exits" if @stream_channel[{stream_no.to_u16, source}]?
      SCTPChannel.new(self, stream_no.to_u16, source)
    end
 
