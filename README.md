@@ -1,4 +1,7 @@
 # SCTP-Crystal
+[![Build Status](https://travis-ci.org/CodeSteak/sctp-crystal.svg?branch=master)
+
+---
 
 SCTP networking library for Crystal.
 
@@ -22,5 +25,7 @@ You need to have `lksctp-tools` installed.
 - Better samples, docs & tests
 - More socket options
 - ~~Statistics and statusevents?~~
+
+---
 
 Feel free to make pull requests or open issues for bugs and missing features.
