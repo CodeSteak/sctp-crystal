@@ -20,7 +20,7 @@ You need to have `lksctp-tools` installed.
 -->
 ## TODO
 - Better samples, docs & tests
-- More Socket options
+- More socket options
 - ~~Statistics and statusevents?~~
 
-Feel free to open an issue for bugs or feature requests.
+Feel free to make pull requests or open issues for bugs and missing features.
