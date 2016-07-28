@@ -2,7 +2,8 @@
 
 SCTP networking library for Crystal.
 
-SCTP-Crystal is currently in an very early state.
+SCTP-Crystal is currently in an early state.
+There may be breaking changes.
 
 ## Dependencies
 ### Linux
@@ -22,3 +23,5 @@ You need to have `lksctp-tools` installed.
 - SCTP stream sockets
 - Socket options
 - Maybe statistics and statusevents?
+
+Feel free to open an issue for bugs or feature requests.
