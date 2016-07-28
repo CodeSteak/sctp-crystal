@@ -19,9 +19,8 @@ You need to have `lksctp-tools` installed.
  :shrug: would be better.
 -->
 ## TODO
-- Samples, Docs & Tests
-- SCTP stream sockets
-- Socket options
-- Maybe statistics and statusevents?
+- Better samples, docs & tests
+- More Socket options
+- ~~Statistics and statusevents?~~
 
 Feel free to open an issue for bugs or feature requests.
