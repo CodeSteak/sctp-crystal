@@ -1,5 +1,4 @@
 # SCTP-Crystal
-[![Build Status](https://travis-ci.org/CodeSteak/sctp-crystal.svg?branch=master)](https://travis-ci.org/CodeSteak/sctp-crystal)
 
 SCTP networking library for Crystal.
 
