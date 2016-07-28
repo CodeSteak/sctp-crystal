@@ -32,12 +32,13 @@ def run_client
 
 
   # Messages are only delivered to SCTPChannels
-  # when receive is called, so messages from
+  # when `receive` is called, so messages from
   # other streams or hosts can be caught.
-  #
+  # This can also be done with `process`.
   spawn do
-    data, stream, address = socket.receive
-    puts "err : ", String.new(data), {stream, address}
+    socket.process do |data, stream, address |
+      puts "err : ", String.new(data), {stream, address}
+    end
   end
 
   channel_local_time.send("local")

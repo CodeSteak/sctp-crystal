@@ -28,6 +28,10 @@
      def close
        @parent.unregister_stream_channel(@stream_no, @destination)
      end
+
+     def finalize
+       close
+     end
    end
 
    def initialize(family : Socket::Family = Socket::Family::INET6)
@@ -77,6 +81,14 @@
     end
   end
 
+  def process
+    while !closed?
+      yield receive
+    end
+  rescue ex
+    raise ex unless closed?
+  end
+
   def receive : {Slice(UInt8), UInt16, IPAddress}
     loop do
       slice = Slice(UInt8).new 8196
@@ -112,7 +124,7 @@
       if Errno.value == Errno::EAGAIN
         wait_readable
       else
-        raise Errno.new("Error receiving datagram")
+        raise Errno.new("Error receiving SCTP message")
       end
     end
   ensure
@@ -177,5 +189,4 @@
   def set_socketopt(option : Int32, value)
     LibC.setsockopt(@fd, LibC::IPPROTO_SCTP, option, pointerof(value).as(Void*), sizeof(typeof(value)))
   end
-
  end
