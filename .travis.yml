@@ -2,3 +2,5 @@ language: crystal
 
 before_install:
   - sudo apt-get install -y libsctp-dev lksctp-tools
+sudo: required
+dist: trusty
