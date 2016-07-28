@@ -6,6 +6,8 @@ describe "sctp_socket" do
     msg = "Hello SCTP"
 
     server = SCTPServer.new "::0", 9000
+    server.read_timeout = 1
+    server.write_timeout = 1
 
     spawn do
       in_msg = server.receive
@@ -14,6 +16,9 @@ describe "sctp_socket" do
     end
 
     client = SCTPSocket.new
+    client.read_timeout = 1
+    client.write_timeout = 1
+
     addr   = client.address("::1",9000) #defaults to IPv6
     client.send(msg, 6, addr)
 
@@ -27,12 +32,18 @@ describe "sctp_socket" do
   it "use channels" do
 
       client = SCTPSocket.new
+      client.read_timeout = 1
+      client.write_timeout = 1
+
       server_addr = client.address("::1", 9001)
 
       channel_one = client[1, server_addr]
       channel_three = client[3, server_addr]
 
       server = SCTPServer.new "::0", 9001
+      server.read_timeout = 1
+      server.write_timeout = 1
+
       spawn do
         msg = server.receive
         address = msg.address
