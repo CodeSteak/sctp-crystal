@@ -1,4 +1,5 @@
-require "../../src/sctp"
+require "./spec_helper"
+
 describe "sctp_socket" do
 
   it "open server, connect and echo" do
@@ -20,7 +21,6 @@ describe "sctp_socket" do
 
     in_msg.gets.should eq(msg)
     in_msg.stream_no.should eq(6)
-
     client.close
   end
 
