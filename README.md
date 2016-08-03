@@ -19,9 +19,9 @@ You need to have `lksctp-tools` installed.
  :shrug: would be better.
 -->
 ## TODO
+- **Refactor to a callback-based API**
 - Better samples, docs & tests
 - More socket options
-- ~~Statistics and statusevents?~~
 
 ---
 
