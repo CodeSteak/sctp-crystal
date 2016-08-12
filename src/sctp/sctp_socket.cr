@@ -138,6 +138,7 @@ class SCTPSocket < IPSocket
 
   def receive(slice : Slice(UInt8)) : {Int32, UInt16, IPAddress}
     loop do
+      check_open
       sockaddr = uninitialized LibC::SockaddrIn6
       addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
@@ -168,6 +169,7 @@ class SCTPSocket < IPSocket
   end
 
   def send(slice : Slice(UInt8), stream_no : UInt16, to : IPAddress) : Int32
+    check_open
     loop do
       sockaddr = to.sockaddr
       flags = 0
