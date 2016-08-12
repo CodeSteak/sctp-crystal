@@ -1,137 +1,128 @@
- class SCTPSocket < IPSocket
+class SCTPSocket < IPSocket
 
-   class SCTPChannel
-     getter stream_no : UInt16
-     getter destination : IPAddress
-     getter parent : SCTPSocket
-     @in_channel : Channel::Buffered(Slice(UInt8))
+  struct SCTPMessage
+    getter stream_no : UInt16
+    getter data : Slice(UInt8)
+    getter address : IPAddress
+    getter socket : SCTPSocket
 
-     def initialize(@parent : SCTPSocket, sctp_stream_no : UInt16 | Int32,  @destination : IPAddress)
-       @stream_no = sctp_stream_no.to_u16
-       in_channel = Channel::Buffered(Slice(UInt8)).new
-       @parent.register_stream_channel(in_channel, sctp_stream_no, @destination)
-       @in_channel = in_channel
-     end
+    def initialize(@data : Slice(UInt8), @stream_no : UInt16, @address : IPAddress, @socket : SCTPSocket)
+    end
 
-     def send(data)
-        @parent.send(data, @stream_no, @destination)
-     end
+    def respond(response : Slice(UInt8))
+      socket.send(response, stream_no, address)
+    end
 
-     def receive : Slice(UInt8)
-       @in_channel.receive
-     end
+    def respond(response)
+      socket.send(response, stream_no, address)
+    end
 
-     def receive_string : String
-       String.new receive
-     end
+    def echo
+      send
+    end
 
-     def close
-       @parent.unregister_stream_channel(@stream_no, @destination)
-     end
+    def send
+      socket.send(data, stream_no, address)
+    end
 
-     def finalize
-       close
-     end
-   end
+    def data_as_string
+      String.new data
+    end
 
-   struct SCTPMessage
-      getter stream_no : UInt16
-      getter data : Slice(UInt8)
-      getter address : IPAddress
-      getter socket : SCTPSocket
+    def gets
+      data_as_string
+    end
 
-      def initialize(@data : Slice(UInt8), @stream_no : UInt16, @address : IPAddress, @socket : SCTPSocket)
+    def puts(string : String)
+      respond(string)
+    end
+  end
+
+  @processing = false
+
+  def initialize(family : Socket::Family = Socket::Family::INET6)
+    super create_socket(family.value, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP)
+    enable_sctp_events
+  end
+
+  def initialize(fd : Int32)
+    super fd
+    enable_sctp_events
+  end
+
+  @handler = Hash({UInt16?, IPAddress?}, (SCTPMessage ->)).new
+
+  def on_message(&@on_message : SCTPMessage ->)
+    unless @processing
+      @processing = true
+      spawn do
+        process
       end
+    end
+  end
 
-      def respond(response : Slice(UInt8))
-        socket.send(response, stream_no, address)
+  def on_message(source : IPAddress, &callback : SCTPMessage ->)
+    @handler[{nil, source}] = callback
+  end
+
+  def on_message(source : IPAddress, none : Nil)
+    @handler.delete({nil, source})
+  end
+
+  def on_message(stream_no : UInt16, &callback : SCTPMessage ->)
+    @handler[{stream_no, nil}] = callback
+  end
+
+  def on_message(stream_no : UInt16, none : Nil)
+    @handler.delete({stream_no, nil})
+  end
+
+  def on_message(stream_no : UInt16, source : IPAddress, &callback : SCTPMessage ->)
+    @handler[{stream_no, source}] = callback
+  end
+
+  def on_message(stream_no : UInt16, source : IPAddress, none : Nil)
+    @handler.delete({stream_no, source})
+  end
+
+  def bind(host, port, dns_timeout = nil)
+    getaddrinfo(host, port, nil, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP, timeout: dns_timeout) do |addrinfo|
+      self.reuse_address = true
+
+      ret = LibC.bind(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
+
+      unless ret == 0
+        next false if addrinfo.ai_next
+        raise Errno.new("Error binding SCTPSocket socket at #{host}:#{port}")
       end
+      true
+    end
+  end
 
-      def respond(response)
-        socket.send(response, stream_no, address)
-      end
-
-      def echo
-        send
-      end
-
-      def send
-        socket.send(data, stream_no, address)
-      end
-
-      def data_as_string
-        String.new data
-      end
-
-      def gets
-        data_as_string
-      end
-
-      def puts(string : String)
-        respond(string)
-      end
-
-      def open_channel
-        socket[stream_no, addr]
-      end
-
-      def as_channel
-        ret = open_channel
-        ret.@in_channel.send(data)
-        ret
-      end
-   end
-
-   def initialize(family : Socket::Family = Socket::Family::INET6)
-      super create_socket(family.value, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP)
-      enable_sctp_data_io_event
-   end
-
-   def initialize(fd : Int32)
-     super fd
-     enable_sctp_data_io_event
-   end
-
-   @stream_channel = Hash({UInt16, IPAddress}, Channel::Buffered(Slice(UInt8))).new
-
-   def register_stream_channel(channel : Channel::Buffered(Slice(UInt8)), stream_no : UInt16, source : IPAddress)
-     @stream_channel[{stream_no, source}] = channel
-   end
-
-   def unregister_stream_channel(stream_no : UInt16, source : IPAddress)
-     @stream_channel.delete({stream_no, source})
-   end
-
-   def [](stream_no : UInt16 | Int32, source : IPAddress)
-     raise Error.new "Error opening SCTPChannel Object: it already exits" if @stream_channel[{stream_no.to_u16, source}]?
-     SCTPChannel.new(self, stream_no.to_u16, source)
-   end
-
-   def bind(host, port, dns_timeout = nil)
-     getaddrinfo(host, port, nil, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP, timeout: dns_timeout) do |addrinfo|
-       self.reuse_address = true
-
-       ret = LibC.bind(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
-
-       unless ret == 0
-         next false if addrinfo.ai_next
-         raise Errno.new("Error binding SCTPSocket socket at #{host}:#{port}")
-       end
-       true
-     end
-   end
-
-   def listen(backlog = 128)
-     if LibC.listen(@fd, backlog) != 0
-       errno = Errno.new("Error listening SCTPSocket")
-       close
-       raise errno
+  def listen(backlog = 128)
+    if LibC.listen(@fd, backlog) != 0
+      errno = Errno.new("Error listening SCTPSocket")
+      close
+      raise errno
     end
   end
 
   def process
+    @processing = true
     while !closed?
-      yield receive
+      msg = receive
+
+      if ch = @handler[{msg.stream_no, msg.address}]?
+        ch.call(msg)
+      elsif ch = @handler[{nil, msg.address}]?
+        ch.call(msg)
+      elsif ch = @handler[{msg.stream_no, nil}]?
+        ch.call(msg)
+      else
+        if calb = @on_message
+          calb.call(msg)
+        end
+      end
     end
   rescue ex
     raise ex unless closed?
@@ -141,12 +132,7 @@
     loop do
       slice = Slice(UInt8).new 8196
       len, stream_no, address = receive(slice)
-
-      if ch = @stream_channel[{stream_no, address}]?
-        ch.send(slice[0, len])
-      else
-        return SCTPMessage.new slice[0, len], stream_no, address, self
-      end
+      return SCTPMessage.new slice[0, len], stream_no, address, self
     end
   end
 
@@ -163,9 +149,9 @@
 
       if bytes_read != -1
         return {
-            bytes_read.to_i32,
-            sndrcvinfo.sinfo_stream,
-            IPAddress.new(sockaddr, addrlen),
+          bytes_read.to_i32,
+          sndrcvinfo.sinfo_stream,
+          IPAddress.new(sockaddr, addrlen),
         }
       end
 
@@ -224,9 +210,10 @@
     IPAddress.new family, host, port
   end
 
-  private def enable_sctp_data_io_event
+  private def enable_sctp_events
     event = LibC::SctpEventSubscribe.new
     event.sctp_data_io_event = 1_u8
+    # event.sctp_shutdown_event = 1_u8 TODO
     set_socketopt(LibC::SCTP_EVENTS, event)
   end
 
@@ -237,4 +224,4 @@
   def set_socketopt(option : Int32, value)
     LibC.setsockopt(@fd, LibC::IPPROTO_SCTP, option, pointerof(value).as(Void*), sizeof(typeof(value)))
   end
- end
+end

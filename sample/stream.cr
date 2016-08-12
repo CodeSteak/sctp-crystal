@@ -1,6 +1,8 @@
 require "../src/sctp"
 
-#Bad Example, I know. But good for testing.
+# ## OUTDATED TODO: Update
+
+# Bad Example, I know. But good for testing.
 
 server = SCTPStreamServer.new(9666)
 
@@ -13,10 +15,10 @@ spawn do
       spawn do
         rn = new_stream.read_byte
         n = if rn
-          rn.to_i32 * 1000
-        else
-          0
-        end
+              rn.to_i32 * 1000
+            else
+              0
+            end
         n.times do
           new_stream.write_byte new_stream.stream_no.to_u8
         end
@@ -26,7 +28,7 @@ spawn do
   end
 end
 
-client = SCTPStreamSocket.new("::1",9666)
+client = SCTPStreamSocket.new("::1", 9666)
 
 ch6 = client[6]
 ch6.write_byte 30_u8

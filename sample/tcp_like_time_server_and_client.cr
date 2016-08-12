@@ -1,5 +1,6 @@
 require "../src/sctp"
 
+# ## OUTDATED TODO: Update
 
 # You can also use SCTPStreamServer and SCTPStreamSocket
 # like TCPServer and TCPSocket.
@@ -30,7 +31,7 @@ def process(socket)
   end
 end
 
-client = SCTPStreamSocket.new("::1",9321)
+client = SCTPStreamSocket.new("::1", 9321)
 client.flush_on_newline = true
 
 client.puts "local"

@@ -1,9 +1,11 @@
 require "../src/sctp"
 
-#Time Server
+# ## OUTDATED TODO: Update
+
+# Time Server
 def run_server
   server = SCTPServer.new "::0", 9000
-  server.autoclose = 30 #seconds
+  server.autoclose = 30 # seconds
   spawn do
     loop do
       request = server.receive
@@ -21,14 +23,12 @@ def run_server
 end
 
 def run_client
-
   socket = SCTPSocket.new
   server_addr = socket.address("::1", 9000)
 
   channel_local_time = socket[1, server_addr]
 
   channel_utc_time = socket[2, server_addr]
-
 
   # Messages are only delivered to SCTPChannels
   # when `receive` is called, so messages from

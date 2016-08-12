@@ -83,5 +83,4 @@ class SCTPStreamServer < SCTPStreamSocket
       end
     end
   end
-
 end

@@ -1,5 +1,6 @@
 require "./sctp_socket"
-class  SCTPServer < SCTPSocket
+
+class SCTPServer < SCTPSocket
   def initialize(host, port, backlog = 128)
     super()
     bind(host, port)

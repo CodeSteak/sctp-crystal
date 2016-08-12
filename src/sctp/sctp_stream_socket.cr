@@ -1,6 +1,5 @@
 # Comming soon
 class SCTPStreamSocket < IPSocket
-
   def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
     getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_SCTP, timeout: dns_timeout) do |addrinfo|
       super(create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol))
@@ -53,20 +52,20 @@ class SCTPStreamSocket < IPSocket
 
     # Reads at most *slice.size* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
     def unbuffered_read(slice : Slice(UInt8))
-       rev = @in_channel.receive
-       raise IndexError.new("Strage behaviour of IO::Buffered") if(rev.size > slice.size)
-       slice.copy_from(rev.pointer(rev.size),rev.size)
-       rev.size
+      rev = @in_channel.receive
+      raise IndexError.new("Strage behaviour of IO::Buffered") if (rev.size > slice.size)
+      slice.copy_from(rev.pointer(rev.size), rev.size)
+      rev.size
     end
 
     # Writes at most *slice.size* bytes from *slice* into the wrapped IO. Returns the number of bytes written.
     def unbuffered_write(slice : Slice(UInt8))
-        @parent.send(slice, @stream_no)
+      @parent.send(slice, @stream_no)
     end
 
     # Flushes the wrapped IO.
     def unbuffered_flush
-        @parent.flush
+      @parent.flush
     end
 
     # Closes the wrapped IO.
@@ -138,8 +137,8 @@ class SCTPStreamSocket < IPSocket
 
       if bytes_read != -1
         return {
-            bytes_read.to_i32,
-            sndrcvinfo.sinfo_stream
+          bytes_read.to_i32,
+          sndrcvinfo.sinfo_stream,
         }
       end
 
@@ -179,5 +178,4 @@ class SCTPStreamSocket < IPSocket
       add_write_event
     end
   end
-
 end

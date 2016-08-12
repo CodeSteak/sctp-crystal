@@ -1,74 +1,78 @@
 require "./spec_helper"
 
 describe "sctp_socket" do
-
   it "open server, connect and echo" do
-    msg = "Hello SCTP"
+    begin
+      msg = "Hello SCTP"
 
-    server = SCTPServer.new "::0", 9000
+      server = SCTPServer.new "::0", 9002
+      server.read_timeout = 1
+      server.write_timeout = 1
+
+      server.on_message do |msg|
+        puts "whut?!"
+        puts msg.gets
+        puts msg.address
+        msg.echo
+      end
+
+      client = SCTPSocket.new
+      client.read_timeout = 1
+      client.write_timeout = 1
+
+      addr = client.address("::1", 9002) # defaults to IPv6
+      client.send(msg, 6, addr)
+
+      in_msg = client.receive
+
+      in_msg.gets.should eq(msg)
+      in_msg.stream_no.should eq(6)
+
+      client.close
+      server.close
+      server.on_message do |msg|
+        puts "?????!"
+      end
+    end
+  end
+
+  it "use channels" do
+
+    server = SCTPServer.new "::0", 9010
     server.read_timeout = 1
     server.write_timeout = 1
 
-    spawn do
-      in_msg = server.receive
-      in_msg.echo
-      server.close
+    a = 0
+    server.on_message do |msg|
+      puts "lol"
+      a += 1
+    end
+
+    b = 0
+    server.on_message(3_u16) do |msg|
+      msg.respond "No. 3"
+      b += 1
     end
 
     client = SCTPSocket.new
     client.read_timeout = 1
     client.write_timeout = 1
 
-    addr   = client.address("::1",9000) #defaults to IPv6
-    client.send(msg, 6, addr)
+    client.read_timeout = 1
+    client.write_timeout = 1
 
-    in_msg = client.receive
+    addr = client.address("::1", 9010) # defaults to IPv6
 
-    in_msg.gets.should eq(msg)
-    in_msg.stream_no.should eq(6)
+    client.send("-", 9, addr)
+    client.send("-", 3, addr)
+
+    sleep 1
+
+    b.should eq(1)
+    a.should eq(1)
+
+
     client.close
+    server.close
   end
-
-  it "use channels" do
-
-      client = SCTPSocket.new
-      client.read_timeout = 1
-      client.write_timeout = 1
-
-      server_addr = client.address("::1", 9001)
-
-      channel_one = client[1, server_addr]
-      channel_three = client[3, server_addr]
-
-      server = SCTPServer.new "::0", 9001
-      server.read_timeout = 1
-      server.write_timeout = 1
-
-      spawn do
-        msg = server.receive
-        address = msg.address
-        server.send("one", 1, address)
-        server.send("three", 3, address)
-        msg = server.receive
-        server.send("three", 3, address)
-        server.close
-      end
-
-      testch = Channel(String).new
-
-      client.send("-", 0, server_addr)
-      spawn do
-        client.process do |msg|
-          testch.send(String.new msg.data)
-        end
-      end
-      channel_three.receive_string.should eq("three")
-      channel_one.receive_string.should eq("one")
-
-      channel_three.close
-      client.send("-", 0, server_addr)
-      testch.receive.should eq("three")
-      client.close
-  end
-
 end
