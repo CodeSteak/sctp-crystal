@@ -19,7 +19,7 @@ You need to have `lksctp-tools` installed.
  :shrug: would be better.
 -->
 ## TODO
-- **Refactor to a callback-based API**
+- [**Refactor to a callback-based API**](https://github.com/CodeSteak/sctp-crystal/tree/callback-based)
 - Better samples, docs & tests
 - More socket options
 
