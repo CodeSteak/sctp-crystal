@@ -18,7 +18,8 @@ dependencies:
 
 ## Usage
 
-For usage please see `samples/`.
+For usage please see `spec/sctp_spec`.
+`samples/` will be updated soon.
 
 ## Dependencies
 ### Linux
@@ -34,7 +35,6 @@ You need to have `lksctp-tools` installed.
  :shrug: would be better.
 -->
 ## TODO
-- **Refactor to a callback-based API** : ~ 50% Done
 - Better samples, docs & tests
 - More socket options
 

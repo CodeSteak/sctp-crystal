@@ -1,42 +1,15 @@
-require "./sctp_stream_socket"
+require "../sctp_base_socket"
 
-class SCTPStreamServer < SCTPStreamSocket
+class SCTPStreamServer < SCTPBaseSocket
   def initialize(host, port, backlog = 128)
-    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_SCTP) do |addrinfo|
-      sock = create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol)
-      super sock
-
-      self.reuse_address = true
-
-      if LibC.bind(sock, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen) != 0
-        errno = Errno.new("Error binding SCTP server at #{host}:#{port}")
-        LibC.close(sock)
-        next false if addrinfo.ai_next
-        raise errno
-      end
-
-      if LibC.listen(sock, backlog) != 0
-        errno = Errno.new("Error listening SCTP server at #{host}:#{port}")
-        LibC.close(sock)
-        next false if addrinfo.ai_next
-        raise errno
-      end
-
-      true
+    bind(host, port, Socket::Type::STREAM) do |addrinfo|
+      super create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol), Socket::Type::SEQPACKET
     end
+    listen(backlog)
   end
 
   def self.new(port : Int, backlog = 128)
     new("::", port, backlog)
-  end
-
-  def self.open(host, port, backlog = 128)
-    server = new(host, port, backlog)
-    begin
-      yield server
-    ensure
-      server.close
-    end
   end
 
   def accept

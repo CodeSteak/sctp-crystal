@@ -1,51 +1,12 @@
-class SCTPSocket < IPSocket
-
-  struct SCTPMessage
-    getter stream_no : UInt16
-    getter data : Slice(UInt8)
-    getter address : IPAddress
-    getter socket : SCTPSocket
-
-    def initialize(@data : Slice(UInt8), @stream_no : UInt16, @address : IPAddress, @socket : SCTPSocket)
-    end
-
-    def respond(response : Slice(UInt8))
-      socket.send(response, stream_no, address)
-    end
-
-    def respond(response)
-      socket.send(response, stream_no, address)
-    end
-
-    def echo
-      send
-    end
-
-    def send
-      socket.send(data, stream_no, address)
-    end
-
-    def data_as_string
-      String.new data
-    end
-
-    def gets
-      data_as_string
-    end
-
-    def puts(string : String)
-      respond(string)
-    end
-  end
-
+class SCTPBaseSocket < IPSocket
   @processing = false
 
-  def initialize(family : Socket::Family = Socket::Family::INET6)
-    super create_socket(family.value, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP)
+  def initialize(family : Socket::Family, @type : Socket::Type)
+    super create_socket(family.value, @type.value, LibC::IPPROTO_SCTP)
     enable_sctp_events
   end
 
-  def initialize(fd : Int32)
+  def initialize(fd : Int32, @type : Socket::Type)
     super fd
     enable_sctp_events
   end
@@ -69,24 +30,25 @@ class SCTPSocket < IPSocket
     @handler.delete({nil, source})
   end
 
-  def on_message(stream_no : UInt16, &callback : SCTPMessage ->)
-    @handler[{stream_no, nil}] = callback
+  def on_message(stream_no : UInt16 | Int32, &callback : SCTPMessage ->)
+    @handler[{stream_no.to_u16, nil}] = callback
   end
 
-  def on_message(stream_no : UInt16, none : Nil)
-    @handler.delete({stream_no, nil})
+  def on_message(stream_no : UInt16 | Int32, none : Nil)
+    @handler.delete({stream_no.to_u16, nil})
   end
 
-  def on_message(stream_no : UInt16, source : IPAddress, &callback : SCTPMessage ->)
-    @handler[{stream_no, source}] = callback
+  def on_message(stream_no : UInt16 | Int32, source : IPAddress, &callback : SCTPMessage ->)
+    @handler[{stream_no.to_u16, source}] = callback
   end
 
-  def on_message(stream_no : UInt16, source : IPAddress, none : Nil)
-    @handler.delete({stream_no, source})
+  def on_message(stream_no : UInt16 | Int32, source : IPAddress, none : Nil)
+    @handler.delete({stream_no.to_u16, source})
   end
 
-  def bind(host, port, dns_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_SEQPACKET, LibC::IPPROTO_SCTP, timeout: dns_timeout) do |addrinfo|
+  def bind(host, port, type : Socket::Type, dns_timeout = nil)
+    getaddrinfo(host, port, nil, type.value, LibC::IPPROTO_SCTP, timeout: dns_timeout) do |addrinfo|
+      yield addrinfo
       self.reuse_address = true
 
       ret = LibC.bind(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
