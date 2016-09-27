@@ -1,2 +1,2 @@
 require "socket"
-require "./sctp/*"
+require "./sctp/**"

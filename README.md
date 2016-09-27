@@ -5,6 +5,22 @@ SCTP networking library for Crystal.
 SCTP-Crystal is currently in an early state.
 There may be breaking changes.
 
+## Installation
+
+Add this to your application's `shard.yml`:
+
+```yaml
+dependencies:
+  nuummite:
+    github: codesteak/sctp-crystal
+    version: ~> 0.2.0
+```
+
+## Usage
+
+For usage please see `spec/sctp_spec`.
+`samples/` will be updated soon.
+
 ## Dependencies
 ### Linux
 You need to have `lksctp-tools` installed.
@@ -19,7 +35,6 @@ You need to have `lksctp-tools` installed.
  :shrug: would be better.
 -->
 ## TODO
-- [**Refactor to a callback-based API**](https://github.com/CodeSteak/sctp-crystal/tree/callback-based)
 - Better samples, docs & tests
 - More socket options
 
