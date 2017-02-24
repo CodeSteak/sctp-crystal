@@ -13,7 +13,7 @@ Add this to your application's `shard.yml`:
 
 ```yaml
 dependencies:
-  nuummite:
+  sctp-crystal:
     github: codesteak/sctp-crystal
     version: ~> 0.2.0
 ```
