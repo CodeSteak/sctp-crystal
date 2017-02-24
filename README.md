@@ -1,5 +1,7 @@
 # SCTP-Crystal
 
+**This library does not work in its current state for Crystal 20.5+ since sockets were refactored.**
+
 SCTP networking library for Crystal.
 
 SCTP-Crystal is currently in an early state.
